@@ -43,10 +43,21 @@ void led_1_task(void *p) {
         }
 
         if (delay > 0) {
+            int new_delay;
+
+            // ON
             gpio_put(LED_PIN_R, 1);
-            vTaskDelay(pdMS_TO_TICKS(delay));
+            if (xQueueReceive(xQueueButId, &new_delay, pdMS_TO_TICKS(delay))) {  // mesmo xQueueReceive de antes, só com timeout
+                delay = new_delay;
+                if (delay <= 0) { gpio_put(LED_PIN_R, 0); continue; }             // chegou 0: apaga já
+            }
+
+            // OFF
             gpio_put(LED_PIN_R, 0);
-            vTaskDelay(pdMS_TO_TICKS(delay));
+            if (xQueueReceive(xQueueButId, &new_delay, pdMS_TO_TICKS(delay))) {
+                delay = new_delay;
+                if (delay <= 0) { continue; }                                     // fica apagado já
+            }
         }
         else{
 
@@ -97,10 +108,21 @@ void led_2_task(void *p) {
         }
 
         if (delay > 0) {
+            int new_delay;
+
+// ON
             gpio_put(LED_PIN_Y, 1);
-            vTaskDelay(pdMS_TO_TICKS(delay));
+            if (xQueueReceive(xQueueButId2, &new_delay, pdMS_TO_TICKS(delay))) {  // mesmo xQueueReceive de antes, só com timeout
+                delay = new_delay;
+                if (delay <= 0) { gpio_put(LED_PIN_Y, 0); continue; }             // chegou 0: apaga já
+            }
+
+            // OFF
             gpio_put(LED_PIN_Y, 0);
-            vTaskDelay(pdMS_TO_TICKS(delay));
+            if (xQueueReceive(xQueueButId2, &new_delay, pdMS_TO_TICKS(delay))) {
+                delay = new_delay;
+                if (delay <= 0) { continue; }                                     // fica apagado já
+            }       
         }
         else{
 
