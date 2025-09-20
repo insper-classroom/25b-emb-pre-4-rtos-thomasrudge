@@ -12,25 +12,8 @@ const int BTN_PIN_G = 26;
 const int LED_PIN_R = 4;
 const int LED_PIN_G = 6;
 
-volatile int flag_r = 0;
-volatile int flag_g = 0;
-
 SemaphoreHandle_t xSemaphore_r;
 SemaphoreHandle_t xSemaphore_g;
-
-void btn_callback(uint gpio, uint32_t events) {
-    if (events == 0x4) {  // fall edge
-        if (gpio == BTN_PIN_R) {
-            flag_r = 1;
-        
-        } 
-    
-      else if (gpio == BTN_PIN_G){
-          flag_g = 1;
-      }
-    }
-}
-
 
 void led_2_task(void *p) {
   gpio_init(LED_PIN_G);
@@ -55,13 +38,11 @@ void btn_2_task(void *p) {
   gpio_pull_up(BTN_PIN_G);
 
   while (true) {
-    if (flag_g) {
+    if (!gpio_get(BTN_PIN_G)) {
+      while (!gpio_get(BTN_PIN_G)) {
+        vTaskDelay(pdMS_TO_TICKS(1));
+      }
       xSemaphoreGive(xSemaphore_g);
-      flag_g = 0;
-      
-    }
-    else{
-      vTaskDelay(pdMS_TO_TICKS(1));
     }
   }
 }
@@ -88,23 +69,18 @@ void btn_1_task(void *p) {
   gpio_set_dir(BTN_PIN_R, GPIO_IN);
   gpio_pull_up(BTN_PIN_R);
 
-    while (true) {
-    if (flag_r) {
+  while (true) {
+    if (!gpio_get(BTN_PIN_R)) {
+      while (!gpio_get(BTN_PIN_R)) {
+        vTaskDelay(pdMS_TO_TICKS(1));
+      }
       xSemaphoreGive(xSemaphore_r);
-      flag_r = 0;
-      
-    }
-    else{
-      vTaskDelay(pdMS_TO_TICKS(1));
     }
   }
 }
 
-
 int main() {
   stdio_init_all();
-  gpio_set_irq_enabled_with_callback(BTN_PIN_R, GPIO_IRQ_EDGE_FALL, true, &btn_callback);
-  gpio_set_irq_enabled(BTN_PIN_G, GPIO_IRQ_EDGE_FALL, true);
   printf("Start RTOS \n");
 
   xSemaphore_r = xSemaphoreCreateBinary();
